@@ -107,3 +107,17 @@ ervations which achieve the task.
 ## Observations / Available Data
 
 `Observation.joint_positions`: The intrinsic position of a joint. This is a one-dimensional value: if the joint is revolute, the rotation angle is returned, if the joint is prismatic, the translation amount is returned, etc. 
+
+# Running the Code 
+
+1. Prerequisites PyRep and RLBench
+2. Running Dumb Immitation Learning Agent Training / Simulation:
+    ```sh
+    python run_learning.py
+    ```
+
+# TODO 
+- [ ] Document Agents
+- [ ] Document Observations/Available data
+- [ ] Add Complete Package Install Scripts
+- [ ] Add More deep learning approaches for task based training for agents. 

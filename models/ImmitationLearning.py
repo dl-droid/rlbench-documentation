@@ -4,7 +4,7 @@ from torch.autograd import Variable
 import torch.nn.functional as F
 import torch.optim as optim
 from torch.utils import data
-from Agent import LearningAgent
+from .Agent import LearningAgent
 from rlbench.backend.observation import Observation
 from typing import List
 import numpy as np
@@ -14,7 +14,7 @@ from . import logger
 
 class FullyConnectedPolicyEstimator(nn.Module):
     
-    def __init__(self,num_actions,num_states):
+    def __init__(self,num_states,num_actions):
         super(FullyConnectedPolicyEstimator, self).__init__()
         self.fc1 = nn.Linear(num_states, 200)
         self.fc2 = nn.Linear(200, 200)
@@ -40,10 +40,11 @@ class ImmitationLearningAgent(LearningAgent):
     todo : Make LSTM Based Networks that can remember over a batch of given observations. 
     https://stackoverflow.com/a/27516930 : For LSTM Array Stacking
     """
-    def __init__(self,learning_rate = 0.01):
+    def __init__(self,learning_rate = 0.01,batch_size=64):
         super(LearningAgent,self).__init__()
         self.learning_rate = learning_rate
-        self.neural_network = FullyConnectedPolicyEstimator(7,7)
+        # action should contain 1 extra value for gripper open close state
+        self.neural_network = FullyConnectedPolicyEstimator(7,8)
         self.optimizer = optim.SGD(self.neural_network.parameters(), lr=learning_rate, momentum=0.9)
         self.loss_function = nn.SmoothL1Loss()
         self.training_data = None
@@ -52,20 +53,27 @@ class ImmitationLearningAgent(LearningAgent):
         self.output_action = 'joint_velocities'
         self.data_loader = None
         self.dataset = None
+        self.batch_size =batch_size
 
     def injest_demonstrations(self,demos:List[List[Observation]]):
-        self.training_data = demos # These hold Individual Demonstrations As each Batch.
-        # todo : Figure Batch Size Problem 
+        # For this Agent, Put all experiences in one huge dump from where you sample state->action 
         # https://stats.stackexchange.com/questions/187591/when-the-data-set-size-is-not-a-multiple-of-the-mini-batch-size-should-the-last
-        
         # $ CREATE Matrix of shape (total_step_from_all_demos,shape_of_observation)
         # $ This is done because we are training a dumb agent to estimate a policy based on just dumb current state
         # $ So for training we will use a 2D Matrix. If we were doing LSTM based training then the data modeling will change. 
-        train_vectors = torch.from_numpy(np.array([getattr(observation,self.input_state) for episode in demos for observation in episode]))
-        ground_truth = torch.from_numpy(np.array([getattr(observation,self.output_action) for episode in demos for observation in episode]))
-        
+        train_vectors = torch.from_numpy(np.array([getattr(observation,'joint_positions') for episode in demos for observation in episode]))
+        # $ First Extract the output_action. Meaning the action that will control the kinematics of the robot. 
+        ground_truth_velocities = np.array([getattr(observation,'joint_velocities') for episode in demos for observation in episode]) #
+        # $ Create a matrix for gripper position vectors.                                                                                                                                                     
+        ground_truth_gripper_positions = np.array([getattr(observation,'gripper_open') for episode in demos for observation in episode])
+        # $ Final Ground truth Tensor will be [joint_velocities_0,...joint_velocities_6,gripper_open]
+        ground_truth_gripper_positions = ground_truth_gripper_positions.reshape(len(ground_truth_gripper_positions),1)
+        ground_truth = torch.from_numpy(np.concatenate((ground_truth_velocities,ground_truth_gripper_positions),axis=1))
+
+        self.logger.info("Creating Tensordata for Pytorch of Size : ",train_vectors.size(0))
         self.dataset = torch.utils.data.TensorDataset(train_vectors, ground_truth)
-        self.data_loader = torch.utils.data.DataLoader(self.dataset, batch_size=64, shuffle=True)
+        
+        self.data_loader = torch.utils.data.DataLoader(self.dataset, batch_size=self.batch_size, shuffle=True)
 
 
     def train_agent(self,epochs:int):
@@ -87,7 +95,7 @@ class ImmitationLearningAgent(LearningAgent):
                 running_loss += loss.item()
                 steps+=1
 
-            # self.logger.info('[%d] loss: %.6f' % (epoch + 1, running_loss / (steps+1)))
+            self.logger.info('[%d] loss: %.6f' % (epoch + 1, running_loss / (steps+1)))
 
     def predict_action(self, demonstration_episode:List[Observation]):
         self.neural_network.eval()

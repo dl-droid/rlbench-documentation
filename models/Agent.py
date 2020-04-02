@@ -1,4 +1,6 @@
 import torch
+from typing import List
+from rlbench.backend.observation import Observation
 class LearningAgent():
     """
     General Purpose class to abstract the functionality of the network from the agent.
@@ -27,9 +29,17 @@ class LearningAgent():
     
     # Keeping it a list of Observation to keep flexibility for LSTM type networks.
     def predict_action(self, demonstration_episode:List[Observation]):
+        """
+        This should Use model.eval() in Pytoch to do prediction for an action
+        This is ment for using saved model
+        """
         raise NotImplementedError()
 
-    def apply_gradient(self, ground_truth_actions, predicted_actions):
+    def act(self,state:List[Observation]):
+        """
+        This will be used by the RL agents and Learn from feadback from the environment. 
+        This will let pytorch hold gradients when running the network. 
+        """
         raise NotImplementedError()
 
     def save_model(self,file_path):
