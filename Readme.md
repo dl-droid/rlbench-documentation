@@ -2,7 +2,7 @@
 To Use RLBench for simulated Training in Robotics there are some key components to Take care of. 
 
 ## Environment
-- The `Environment` can be imported. Every environment takes an `ActionMode` and `ObservationConfig` which will help determine the inputs actions and the 
+- The `Environment` can be imported. Every environment takes an `ActionMode` and `ObservationConfig` which will help determine the inputs actions and the observations the environment will make. 
 - Every `Observation` consists of the below data points which are captured in the demos. 
     ```python
     class Observation(object):
@@ -58,7 +58,7 @@ ervations which achieve the task.
     ```python
     demos = task.get_demos(2, live_demos=True)  # -> List[List[Observation]] -> List[Observation] represents a individual Demonstration with every item in that List represnts a step in that Demonstration
     ```
-    
+
 ## Immitation Learning Setup 
 - To do immitation learning with RLBench, create an object that will expose methods for the model to `predict_actions` and `apply_gradient`. The `apply_gradient` method will be used to evaluate the loss on basis of the 
     ```python
@@ -81,7 +81,6 @@ ervations which achieve the task.
             """
 
             return self.model.propage_loss(ground_truth_actions,predicted_actions)
-            
     ```
 - Using an object like this and the getting the data gathered using `demos` from a `Task`. Run training for the Model predicting actions of the robot. 
     ```python
@@ -104,3 +103,7 @@ ervations which achieve the task.
         # Apply the Gradients to model for next prediction in the training cycles. 
         imitation_learning_model.apply_gradient(ground_truth_actions, predicted_actions)
     ```
+
+## Observations / Available Data
+
+`Observation.joint_positions`: The intrinsic position of a joint. This is a one-dimensional value: if the joint is revolute, the rotation angle is returned, if the joint is prismatic, the translation amount is returned, etc. 
