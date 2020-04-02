@@ -59,50 +59,56 @@ ervations which achieve the task.
     demos = task.get_demos(2, live_demos=True)  # -> List[List[Observation]] -> List[Observation] represents a individual Demonstration with every item in that List represnts a step in that Demonstration
     ```
 
-## Immitation Learning Setup 
-- To do immitation learning with RLBench, create an object that will expose methods for the model to `predict_actions` and `apply_gradient`. The `apply_gradient` method will be used to evaluate the loss on basis of the 
+## Agent Setup 
+- Use the `models.Agent` to create new agents that will implement data and observations from the environments.
     ```python
-    import pytorch
-    class ImitationLearningModel(object):
-
+    class LearningAgent():
         def __init__(self):
-            # Get a crafted model from somewhere. 
-            self.model = get_pytorch_model()
+            self.learning_rate = None
+            self.neural_network = None
+            self.optimizer = None
+            self.loss_function = None
+            self.training_data = None
+            self.logger = None
+            self.input_state = None
+            self.output_action = None
 
-        def predict_action(self, batch):
-            """
-            Predict an action on basis of the Model.
-            """
-            return self.model.evaluate(batch) # Dimensions of each action should be according to ActionMode
+        def injest_demonstrations(self,demos:List[List[Observation]]):
+            raise NotImplementedError()
 
-        def apply_gradient(self, ground_truth_actions, predicted_actions):
+        
+        def train_agent(self,epochs:int):
+            raise NotImplementedError()
+        
+        def predict_action(self, demonstration_episode:List[Observation]):
             """
-            Propagate Loss inside the Model
+            This should Use model.eval() in Pytoch to do prediction for an action
+            This is ment for using saved model
             """
+            raise NotImplementedError()
 
-            return self.model.propage_loss(ground_truth_actions,predicted_actions)
+        def act(self,state:List[Observation]):
+            """
+            This will be used by the RL agents and Learn from feadback from the environment. 
+            This will let pytorch hold gradients when running the network. 
+            """
+            raise NotImplementedError()
+
+        def save_model(self,file_path):
+            if not self.neural_network:
+                return
+            self.neural_network.to('cpu')
+            torch.save(self.neural_network.state_dict(), file_path)
+
+        def load_model(self,file_path):
+            if not self.neural_network:
+                return
+            # $ this will load a model from file path.
+            self.neural_network.load_state_dict(torch.load(file_path))
     ```
-- Using an object like this and the getting the data gathered using `demos` from a `Task`. Run training for the Model predicting actions of the robot. 
-    ```python
-    imitation_learning_model = ImitationLearningModel()
-    NUMBER_OF_DEMONSTRATIONS = 1000
-    demos = task.get_demos(NUMBER_OF_DEMONSTRATIONS, live_demos=True)  # -> List[List[Observation]]
-    demos = np.array(demos).flatten()
-    # An example of using the demos to 'train' using behaviour cloning loss.
-    for i in range(100):
-        print("'training' iteration %d" % i)
-        # Get a batch/episode/demo from full dataset. 
-        batch = np.random.choice(demos, replace=False)
-        # Get the values of the endeffector positions which can be used as training data
-        # For Other options for observations/training datapoint to take check : Observation class
-        effector_positions = [obs.gripper_joint_positions for obs in batch]
-        # Predict the action on basis of the input provided to the model.
-        predicted_actions = imitation_learning_model.predict_action(effector_positions)
-        # Get Ground truth values of actions of the chosen batch.  
-        ground_truth_actions = [obs.joint_velocities for obs in batch]
-        # Apply the Gradients to model for next prediction in the training cycles. 
-        imitation_learning_model.apply_gradient(ground_truth_actions, predicted_actions)
-    ```
+
+- The `deep_learning_rl.py` file contains methods that can directly get demonstrations and for immitation learning. The file also contains a method(`simulate_trained_agent`) which takes a learned `Agent` and runs it in simulation without headless mode for quick evaluation of model.
+- Example of Dumb Agent Learning a Stupid Policy(state->neural net->action) from demostration can be found in the `models.ImmitationLearning`. 
 
 ## Observations / Available Data
 
