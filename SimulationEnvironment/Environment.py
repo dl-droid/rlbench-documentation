@@ -36,15 +36,17 @@ state_types = [ 'left_shoulder_rgb',
 # https://github.com/stepjam/RLBench/blob/master/rlbench/observation_config.py#L5
 # The depth Values are also single channel. Where depth will be of dims (width,height)
 # https://github.com/stepjam/PyRep/blob/4a61f6756c3827db66423409632358de312b97e4/pyrep/objects/vision_sensor.py#L128
-image_types=[ 'left_shoulder_rgb',
-                # 'left_shoulder_depth', # Depth is in Black and White
-                'left_shoulder_mask',
-                'right_shoulder_rgb',
-                # 'right_shoulder_depth', # Depth is in Black and White
-                'right_shoulder_mask',
-                'wrist_rgb',
-                # 'wrist_depth', # Depth is in Black and White
-                'wrist_mask']
+image_types=[ 
+    'left_shoulder_rgb',
+    'left_shoulder_depth', # Depth is in Black and White
+    'left_shoulder_mask', # Mask can be single channel
+    'right_shoulder_rgb',
+    'right_shoulder_depth', # Depth is in Black and White
+    'right_shoulder_mask', # Mask can be single channel
+    'wrist_rgb',
+    'wrist_depth', # Depth is in Black and White
+    'wrist_mask' # Mask can be single channel
+]
 
 
 
