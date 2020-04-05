@@ -146,6 +146,7 @@ class ReachTargetSimulationEnv(SimulationEnvionment):
             if i % self.episode_length == 0:
                 self.logger.info('Reset Episode %d'% i)
                 descriptions, obs = self.task.reset()
+                obs = self._get_state(obs)
                 self.logger.info(descriptions)
             action = agent.predict_action([obs])
             selected_action = action
