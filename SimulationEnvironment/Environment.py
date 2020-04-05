@@ -37,8 +37,8 @@ state_types = [ 'left_shoulder_rgb',
 # The depth Values are also single channel. Where depth will be of dims (width,height)
 # https://github.com/stepjam/PyRep/blob/4a61f6756c3827db66423409632358de312b97e4/pyrep/objects/vision_sensor.py#L128
 image_types=[ 
-    'left_shoulder_rgb',
-    'left_shoulder_depth', # Depth is in Black and White
+    'left_shoulder_rgb', # (width,height,channel)
+    'left_shoulder_depth', # Depth is in Black and White : (width,height)
     'left_shoulder_mask', # Mask can be single channel
     'right_shoulder_rgb',
     'right_shoulder_depth', # Depth is in Black and White
@@ -98,7 +98,7 @@ class SimulationEnvionment():
 
     def step(self, action):
         obs_, reward, terminate = self.task.step(action)  # reward in original rlbench is binary for success or not
-        return self._get_state(obs_), reward, terminate, None
+        return self._get_state(obs_), reward, terminate
 
     def shutdown(self):
         self.logger.info("Environment Shutdown! Create New Instance If u want to start again")
@@ -106,7 +106,9 @@ class SimulationEnvionment():
         self.env.shutdown()
     
     def get_demos(self,num_demos):
+        self.logger.info("Creating Demos")
         demos = self.task.get_demos(num_demos, live_demos=True)  # -> List[List[Observation]]
+        self.logger.info("Created Demos")
         demos = np.array(demos).flatten()
         self.shutdown()
         new_demos = []
@@ -145,7 +147,7 @@ class ReachTargetSimulationEnv(SimulationEnvionment):
                 self.logger.info(descriptions)
             action = agent.predict_action([obs])
             selected_action = action[0]
-            obs, reward, terminate = self.task.step(selected_action)
+            obs, reward, terminate = self.step(selected_action)
             if reward == 1:
                 self.logger.info("Reward Of 1 Achieved. Task Completed By Agent In steps : %d"%i)
                 return

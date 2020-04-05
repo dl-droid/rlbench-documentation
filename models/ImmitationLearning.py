@@ -60,7 +60,7 @@ class ImmitationLearningAgent(LearningAgent):
         self.dataset = None
         self.batch_size =batch_size
 
-    def injest_demonstrations(self,demos:List[List[Observation]]):
+    def injest_demonstrations(self,demos:List[List[Observation]],**kwargs):
         # For this Agent, Put all experiences in one huge dump from where you sample state->action 
         # https://stats.stackexchange.com/questions/187591/when-the-data-set-size-is-not-a-multiple-of-the-mini-batch-size-should-the-last
         # $ CREATE Matrix of shape (total_step_from_all_demos,shape_of_observation)
@@ -102,7 +102,7 @@ class ImmitationLearningAgent(LearningAgent):
 
             self.logger.info('[%d] loss: %.6f' % (epoch + 1, running_loss / (steps+1)))
 
-    def predict_action(self, demonstration_episode:List[Observation]):
+    def predict_action(self, demonstration_episode:List[Observation],**kwargs):
         self.neural_network.eval()
         train_vectors = torch.from_numpy(np.array([getattr(observation,self.input_state) for observation in demonstration_episode]))
         input_val = Variable(train_vectors)
