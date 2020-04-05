@@ -20,7 +20,7 @@ class LearningAgent():
         self.input_state = None
         self.output_action = None
 
-    def injest_demonstrations(self,demos:List[List[Observation]]):
+    def injest_demonstrations(self,demos:List[List[Observation]],**kwargs):
         raise NotImplementedError()
 
     
@@ -28,14 +28,14 @@ class LearningAgent():
         raise NotImplementedError()
     
     # Keeping it a list of Observation to keep flexibility for LSTM type networks.
-    def predict_action(self, demonstration_episode:List[Observation]):
+    def predict_action(self, demonstration_episode:List[Observation],**kwargs):
         """
         This should Use model.eval() in Pytoch to do prediction for an action
         This is ment for using saved model
         """
         raise NotImplementedError()
 
-    def act(self,state:List[Observation]):
+    def act(self,state:List[Observation],**kwargs):
         """
         This will be used by the RL agents and Learn from feadback from the environment. 
         This will let pytorch hold gradients when running the network. 
