@@ -19,4 +19,6 @@ export QT_QPA_PLATFORM_PLUGIN_PATH=$COPPELIASIM_ROOT
 # echo "Running Demo Script"
 # .env/bin/python PyRep/examples/example_baxter_pick_and_pass.py
 echo "Installed PyRep and RLBench !"
+echo "Installing PyTorch and Metaflow"
+.env/bin/pip install -r requirements.txt
 # docker run -i -t --rm -e DISPLAY=$DISPLAY -u docker -v /tmp/.X11-unix:/tmp/.X11-unix:ro --name="PyRep_Docker_Test" valaygaurang/pyrep:0.1
