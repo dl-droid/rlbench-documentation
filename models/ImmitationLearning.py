@@ -1,14 +1,18 @@
+# Import Absolutes deps
 import torch.nn as nn
 import torch
 from torch.autograd import Variable
 import torch.nn.functional as F
 import torch.optim as optim
 from torch.utils import data
-from .Agent import LearningAgent
 from rlbench.backend.observation import Observation
 from typing import List
 import numpy as np
-from . import logger
+# Import Relative deps
+import sys
+sys.path.append('..')
+from models.Agent import LearningAgent
+import logger
  
 
 
@@ -49,6 +53,7 @@ class ImmitationLearningAgent(LearningAgent):
         self.loss_function = nn.SmoothL1Loss()
         self.training_data = None
         self.logger = logger.create_logger(__name__)
+        self.logger.propagate = 0
         self.input_state = 'joint_positions'
         self.output_action = 'joint_velocities'
         self.data_loader = None
