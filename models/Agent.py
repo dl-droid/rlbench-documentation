@@ -56,3 +56,8 @@ class LearningAgent():
         # $ this will load a model from file path.
         self.neural_network.load_state_dict(torch.load(file_path))
     
+
+    def load_model_from_object(self,state_dict):
+        if not self.neural_network:
+            return 
+        self.neural_network.load_state_dict(state_dict)

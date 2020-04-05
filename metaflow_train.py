@@ -1,4 +1,4 @@
-from metaflow import FlowSpec, step
+from metaflow import FlowSpec, step,retry
 
 
 class TrainingSimulatorFlow(FlowSpec):
@@ -6,10 +6,11 @@ class TrainingSimulatorFlow(FlowSpec):
     @step
     def start(self):
         print("Importing data in this step")
-        self.num_demos = 2
-        self.num_epochs = 10
+        self.num_demos = 300
+        self.num_epochs = 100
         self.next(self.train)
 
+    @retry(times=4)
     @step
     def train(self):
         # todo : Create an image for training 
