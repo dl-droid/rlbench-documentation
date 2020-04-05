@@ -1,5 +1,8 @@
-# RLBench Documentation
-To Use RLBench for simulated Training in Robotics there are some key components to Take care of. 
+# Deep Learning On RLBench 
+Use RLBench to simulate/train robot agents. The robot agents will use Neural networks to run. 
+
+
+# Relevant Modules
 
 ## Environment
 - The `Environment` can be imported. Every environment takes an `ActionMode` and `ObservationConfig` which will help determine the inputs actions and the observations the environment will make. 
@@ -117,6 +120,7 @@ ervations which achieve the task.
 # Running the Code 
 
 1. Prerequisites PyRep and RLBench
+    1. Run `sh setup_pyrep_ubuntu18.04.sh` on Ubuntu18.04 for installing PyRep + RLBench
 2. Running Dumb Immitation Learning Agent Training / Simulation:
     ```sh
     python run_learning.py
@@ -125,5 +129,5 @@ ervations which achieve the task.
 # TODO 
 - [ ] Document Agents
 - [ ] Document Observations/Available data
-- [ ] Add Complete Package Install Scripts
+- [x] Add Complete Package Install Scripts
 - [ ] Add More deep learning approaches for task based training for agents. 
