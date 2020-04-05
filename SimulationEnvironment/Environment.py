@@ -60,14 +60,14 @@ class SimulationEnvionment():
     def __init__(self,\
                 action_mode=DEFAULT_ACTION_MODE,\
                 task=DEFAULT_TASK,\
+                dataset_root='',\
                 headless=True):
         obs_config = ObservationConfig()
         obs_config.set_all(True)
         action_mode = action_mode
         self.env = Environment(
-            action_mode, obs_config=obs_config, headless=headless)
-        # self.env.launch()
-        self.env.launch()
+            action_mode,dataset_root,obs_config=obs_config, headless=headless)
+        # Dont need to call launch as task.get_task can launch env. 
         self.task = self.env.get_task(task)
         _, obs = self.task.reset()
         self.action_space =  spaces.Box(low=-1.0, high=1.0, shape=(action_mode.action_size,), dtype=np.float32)
@@ -110,8 +110,8 @@ class ReachTargetSimulationEnv(SimulationEnvionment):
     This environment is specially ment for running traing agent for ReachTarget Task. 
     This can be inherited for different ways of doing learning. 
     """
-    def __init__(self, action_mode=DEFAULT_ACTION_MODE, headless=True,training_steps = 120,episode_length = 40):
-        super(ReachTargetSimulationEnv,self).__init__(action_mode=action_mode, task=ReachTarget, headless=headless)
+    def __init__(self, action_mode=DEFAULT_ACTION_MODE, headless=True,training_steps = 120,episode_length = 40,dataset_root=''):
+        super(ReachTargetSimulationEnv,self).__init__(action_mode=action_mode, task=ReachTarget, headless=headless,dataset_root=dataset_root)
         self.training_steps = training_steps
         self.episode_length = episode_length
         self.logger = logger.create_logger(__class__.__name__)
@@ -159,16 +159,16 @@ class ReachTargetSimulationEnv(SimulationEnvionment):
 
         self.shutdown()
 
-    def get_demos(self,num_demos):
+    def get_demos(self,num_demos,live_demos=True,image_paths=False):
         self.logger.info("Creating Demos")
-        demos = self.task.get_demos(num_demos, live_demos=True)  # -> List[List[Observation]]
+        demos = self.task.get_demos(num_demos, live_demos=live_demos,image_paths=image_paths)  # -> List[List[Observation]]
         self.logger.info("Created Demos")
         demos = np.array(demos).flatten()
         self.shutdown()
         new_demos = []
         for episode in demos:
             new_episode = []
-            for i in episode:
-                new_episode.append(self._get_state(i))
+            for step in episode:
+                new_episode.append(self._get_state(step))
             new_demos.append(new_episode)
         return new_demos

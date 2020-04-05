@@ -125,6 +125,10 @@ ervations which achieve the task.
     ```sh
     python run_learning.py
     ```
+3. Running Dataset Creator for RL bench to create dataset in `/tmp/rlbench_datasets`
+    ``
+    python RLBench/tools/dataset_generator.py --tasks reach_target --episodes_per_task 500 --processes 2
+    ``
 
 # TODO 
 - [ ] Document Agents
