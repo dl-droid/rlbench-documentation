@@ -66,7 +66,7 @@ class ImmitationLearningAgent(LearningAgent):
         # $ CREATE Matrix of shape (total_step_from_all_demos,shape_of_observation)
         # $ This is done because we are training a dumb agent to estimate a policy based on just dumb current state
         # $ So for training we will use a 2D Matrix. If we were doing LSTM based training then the data modeling will change. 
-        train_vectors = torch.from_numpy(np.array([getattr(observation,'joint_positions') for episode in demos for observation in episode]))
+        joint_position_train_vector = torch.from_numpy(self.get_train_vectors(demos))
         # $ First Extract the output_action. Meaning the action that will control the kinematics of the robot. 
         ground_truth_velocities = np.array([getattr(observation,'joint_velocities') for episode in demos for observation in episode]) #
         # $ Create a matrix for gripper position vectors.                                                                                                                                                     
@@ -74,12 +74,15 @@ class ImmitationLearningAgent(LearningAgent):
         # $ Final Ground truth Tensor will be [joint_velocities_0,...joint_velocities_6,gripper_open]
         ground_truth_gripper_positions = ground_truth_gripper_positions.reshape(len(ground_truth_gripper_positions),1)
         ground_truth = torch.from_numpy(np.concatenate((ground_truth_velocities,ground_truth_gripper_positions),axis=1))
-
-        self.logger.info("Creating Tensordata for Pytorch of Size : ",train_vectors.size(0))
-        self.dataset = torch.utils.data.TensorDataset(train_vectors, ground_truth)
+        
+        # demos[0][0].task_low_dim_state contains all target's coordinates
+        self.logger.info("Creating Tensordata for Pytorch of Size : %s"%str(joint_position_train_vector.size()))
+        self.dataset = torch.utils.data.TensorDataset(joint_position_train_vector, ground_truth)
         
         self.data_loader = torch.utils.data.DataLoader(self.dataset, batch_size=self.batch_size, shuffle=True)
 
+    def get_train_vectors(self,demos:List[List[Observation]]):
+        return np.array([getattr(observation,'joint_positions') for episode in demos for observation in episode])
 
     def train_agent(self,epochs:int):
         if not self.dataset:
@@ -102,10 +105,10 @@ class ImmitationLearningAgent(LearningAgent):
 
             self.logger.info('[%d] loss: %.6f' % (epoch + 1, running_loss / (steps+1)))
 
-    def predict_action(self, demonstration_episode:List[Observation],**kwargs):
+    def predict_action(self, demonstration_episode:List[Observation],**kwargs) -> np.array:
         self.neural_network.eval()
-        train_vectors = torch.from_numpy(np.array([getattr(observation,self.input_state) for observation in demonstration_episode]))
-        input_val = Variable(train_vectors)
+        train_vectors = self.get_train_vectors([demonstration_episode])
+        input_val = Variable(torch.from_numpy(train_vectors[0]))
         output = self.neural_network(input_val.float())
         return output.data.cpu().numpy()
         # return np.random.uniform(size=(len(batch), 7))

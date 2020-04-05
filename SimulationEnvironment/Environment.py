@@ -74,22 +74,13 @@ class SimulationEnvionment():
         self.logger = logger.create_logger(__class__.__name__)
         self.logger.propagate = 0
 
-
     def _get_state(self, obs:Observation):
-        # _get_state function is present so that some alterations can be made to observations so that
-        # dimensionality management is handled from lower level. 
-        for state_type in image_types:    # changing axis of images in `Observation`
-            image = getattr(obs, state_type)
-            if image is None:
-                continue
-            if len(image.shape) == 2:
-                # Depth and Mask can be single channel.Hence we Reshape the image from (width,height) -> (width,height,1)
-                image = image.reshape(*image.shape,1)
-            # self.logger.info("Shape of : %s Before Move Axis %s" % (state_type,str(image.shape)))
-            image=np.moveaxis(image, 2, 0)  # change (H, W, C) to (C, H, W) for torch
-            # self.logger.info("After Moveaxis :: %s" % str(image.shape))
-            setattr(obs,state_type,image)
-        return obs
+        """
+        This will be a hook over the environment to get the state. 
+        This will ensure that if changes need to be made to attributes of `Observation` then they can be made
+        in a modular way. 
+        """
+        raise NotImplementedError()
 
     
     def reset(self):
@@ -106,18 +97,11 @@ class SimulationEnvionment():
         self.env.shutdown()
     
     def get_demos(self,num_demos):
-        self.logger.info("Creating Demos")
-        demos = self.task.get_demos(num_demos, live_demos=True)  # -> List[List[Observation]]
-        self.logger.info("Created Demos")
-        demos = np.array(demos).flatten()
-        self.shutdown()
-        new_demos = []
-        for episode in demos:
-            new_episode = []
-            for i in range(len(episode)):
-                new_episode.append(self._get_state(episode[i]))
-            new_demos.append(new_episode)
-        return new_demos
+       """
+       Should be implemented by child classes because other extra properties needed
+       before training can be accessed via that. 
+       """
+       raise NotImplementedError()
 
 
 class ReachTargetSimulationEnv(SimulationEnvionment):
@@ -139,6 +123,24 @@ class ReachTargetSimulationEnv(SimulationEnvionment):
         """
         return np.array(self.task.target.get_position())
 
+
+    def _get_state(self, obs:Observation):
+        # _get_state function is present so that some alterations can be made to observations so that
+        # dimensionality management is handled from lower level. 
+        for state_type in image_types:    # changing axis of images in `Observation`
+            image = getattr(obs, state_type)
+            if image is None:
+                continue
+            if len(image.shape) == 2:
+                # Depth and Mask can be single channel.Hence we Reshape the image from (width,height) -> (width,height,1)
+                image = image.reshape(*image.shape,1)
+            # self.logger.info("Shape of : %s Before Move Axis %s" % (state_type,str(image.shape)))
+            image=np.moveaxis(image, 2, 0)  # change (H, W, C) to (C, H, W) for torch
+            # self.logger.info("After Moveaxis :: %s" % str(image.shape))
+            setattr(obs,state_type,image)
+
+        return obs
+
     def run_trained_agent(self,agent:LearningAgent):
         for i in range(self.training_steps):
             if i % self.episode_length == 0:
@@ -146,7 +148,8 @@ class ReachTargetSimulationEnv(SimulationEnvionment):
                 descriptions, obs = self.task.reset()
                 self.logger.info(descriptions)
             action = agent.predict_action([obs])
-            selected_action = action[0]
+            selected_action = action
+            # print(selected_action,"selected_action")
             obs, reward, terminate = self.step(selected_action)
             if reward == 1:
                 self.logger.info("Reward Of 1 Achieved. Task Completed By Agent In steps : %d"%i)
@@ -155,3 +158,17 @@ class ReachTargetSimulationEnv(SimulationEnvionment):
                 self.logger.info("Recieved Terminate")
 
         self.shutdown()
+
+    def get_demos(self,num_demos):
+        self.logger.info("Creating Demos")
+        demos = self.task.get_demos(num_demos, live_demos=True)  # -> List[List[Observation]]
+        self.logger.info("Created Demos")
+        demos = np.array(demos).flatten()
+        self.shutdown()
+        new_demos = []
+        for episode in demos:
+            new_episode = []
+            for i in episode:
+                new_episode.append(self._get_state(i))
+            new_demos.append(new_episode)
+        return new_demos

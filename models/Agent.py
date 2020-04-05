@@ -1,5 +1,6 @@
 import torch
 from typing import List
+import numpy as np
 from rlbench.backend.observation import Observation
 class LearningAgent():
     """
@@ -28,10 +29,11 @@ class LearningAgent():
         raise NotImplementedError()
     
     # Keeping it a list of Observation to keep flexibility for LSTM type networks.
-    def predict_action(self, demonstration_episode:List[Observation],**kwargs):
+    def predict_action(self, demonstration_episode:List[Observation],**kwargs) -> np.array:
         """
         This should Use model.eval() in Pytoch to do prediction for an action
-        This is ment for using saved model
+        This is ment for using saved model. This should also ensure returning
+        numpy array is of same dimension as ActionMode + 1 (Gripper Open/close)
         """
         raise NotImplementedError()
 
