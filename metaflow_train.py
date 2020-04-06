@@ -8,6 +8,26 @@ class FinalData():
         self.agent_name = None
         self.loss = None
         self.simulation_analytics = None
+    
+    def __str__(self):
+        x = '''
+        Agent Name : {agent_name}
+
+        Simulation Results 
+
+            Total Epochs : {total_epochs}
+
+            Steps Per Episode : {total_epochs}
+
+            Number Of Converged Cases : {num_convergence_metrics}
+
+            %  Cases That Converged : {percent_converge}
+        '''.format(agent_name=self.agent_name,\
+            total_epochs=str(self.simulation_analytics['total_epochs_allowed']),\
+            num_convergence_metrics=str(len(self.simulation_analytics['convergence_metrics'])), \
+            percent_converge=str(len((self.simulation_analytics['convergence_metrics'])/self.simulation_analytics['total_epochs_allowed'])*100)
+            )
+        return super().__str__()
 
 class TrainingSimulatorFlow(FlowSpec):
 
