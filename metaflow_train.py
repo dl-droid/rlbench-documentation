@@ -10,34 +10,37 @@ class FinalData():
         self.simulation_analytics = None
     
     def __str__(self):
+        num_convergence_metrics = len(self.simulation_analytics['convergence_metrics'])
+        percent_converge = (len(self.simulation_analytics['convergence_metrics']) / self.simulation_analytics['total_epochs_allowed'])*100
         x = '''
         Agent Name : {agent_name}
 
         Simulation Results 
 
-            Total Epochs : {total_epochs}
+            Total Number of Episodes : {total_episodes}
 
-            Steps Per Episode : {total_epochs}
+            Steps Per Episode : {steps}
 
             Number Of Converged Cases : {num_convergence_metrics}
 
             %  Cases That Converged : {percent_converge}
         '''.format(agent_name=self.agent_name,\
-            total_epochs=str(self.simulation_analytics['total_epochs_allowed']),\
-            num_convergence_metrics=str(len(self.simulation_analytics['convergence_metrics'])), \
-            percent_converge=str(len((self.simulation_analytics['convergence_metrics'])/self.simulation_analytics['total_epochs_allowed'])*100)
+            total_episodes=str(self.simulation_analytics['total_epochs_allowed']),\
+            steps=str(self.simulation_analytics['max_steps_per_episode']),\
+            num_convergence_metrics=str(num_convergence_metrics), \
+            percent_converge=str(percent_converge)
             )
-        return super().__str__()
+        return x
 
 class TrainingSimulatorFlow(FlowSpec):
 
     @step
     def start(self):
         print("Importing data in this step")
-        self.num_demos = 300
-        self.num_epochs = 100
+        self.num_demos = 350
+        self.num_epochs = 200 # Training epochs
         self.episode_length=50
-        self.num_episodes=2
+        self.num_episodes=200 # Simulated Testing Epochs.
         self.agent_modules = [{
             'module_name':'models.SmartImmitationAgent',
             'agent_name':'SimpleImmitationLearningAgent'
