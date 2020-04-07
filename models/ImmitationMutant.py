@@ -21,13 +21,11 @@ class FullyConnectedPolicyEstimator(nn.Module):
     def __init__(self,num_states,num_actions):
         super(FullyConnectedPolicyEstimator, self).__init__()
         self.fc1 = nn.Linear(num_states, 200)
-        self.fc2 = nn.Linear(200, 200)
         self.fc3 = nn.Linear(200, num_actions)
 
     # x is input to the network.
     def forward(self, x):
         x = F.relu(self.fc1(x))
-        x = F.relu(self.fc2(x))
         x = self.fc3(x)
         return x
 
@@ -42,7 +40,6 @@ class ModularPolicyEstimator(nn.Module):
 
         # Define connecting Fc Linear layers.
         self.fc1 = nn.Linear(20, 200)
-        self.fc2 = nn.Linear(200, 200)
         self.fc3 = nn.Linear(200,action_dims)
 
     def forward(self,joint_pos,target_pos):
@@ -54,7 +51,6 @@ class ModularPolicyEstimator(nn.Module):
         # Output is combined into a single tensor.
         stacked_tensor = torch.cat((joint_pos_op,target_pos_op),1)
         op = F.relu(self.fc1(stacked_tensor))
-        op = F.relu(self.fc2(op))
         op = self.fc3(op)
 
         return op

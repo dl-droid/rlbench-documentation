@@ -18,17 +18,22 @@ import logger
 
 class SimpleFullyConnectedPolicyEstimator(nn.Module):
     
-    def __init__(self,num_states,num_actions):
+    def __init__(self,num_states,num_actions,num_layers=1):
         super(SimpleFullyConnectedPolicyEstimator, self).__init__()
-        self.fc1 = nn.Linear(num_states, 200)
-        self.fc2 = nn.Linear(200, 200)
-        self.fc3 = nn.Linear(200, num_actions)
+        self.fc0 = nn.Linear(num_states, 200)
+
+        self.layer_names = ['fc'+str(i+1) for i in range(num_layers)]
+        for layer_name in self.layer_names:
+            setattr(self,layer_name,nn.Linear(200,200))
+        self.fc_op = nn.Linear(200, num_actions)
 
     # x is input to the network.
     def forward(self, x):
-        x = F.relu(self.fc1(x))
-        x = F.relu(self.fc2(x))
-        x = self.fc3(x)
+        x = F.relu(self.fc0(x))
+        for layer_name in self.layer_names:
+            layer = getattr(self,layer_name)
+            x = F.relu(layer(x))
+        x = self.fc_op(x)
         return x
 
 
@@ -55,21 +60,23 @@ class SimpleImmitationLearningAgent(LearningAgent):
     
     - [joint_positions_1,....joint_position_7,x,y,z] : Tensor Representation
     """
-    def __init__(self,learning_rate = 0.01,batch_size=64):
+    def __init__(self,learning_rate = 0.01,batch_size=64,num_layers=4):
         super(LearningAgent,self).__init__()
         self.learning_rate = learning_rate
         # action should contain 1 extra value for gripper open close state
-        self.neural_network = SimpleFullyConnectedPolicyEstimator(10,8)
+        self.neural_network = SimpleFullyConnectedPolicyEstimator(10,8,num_layers=num_layers)
         self.optimizer = optim.SGD(self.neural_network.parameters(), lr=learning_rate, momentum=0.9)
         self.loss_function = nn.SmoothL1Loss()
         self.training_data = None
-        self.logger = logger.create_logger(__name__)
+        agent_name = __class__.__name__+'__Layer__'+str(num_layers)
+        self.logger = logger.create_logger(agent_name)
         self.logger.propagate = 0
         self.input_state = 'joint_positions'
         self.output_action = 'joint_velocities'
         self.data_loader = None
         self.dataset = None
         self.batch_size =batch_size
+        
 
     def injest_demonstrations(self,demos:List[List[Observation]],**kwargs):
         """

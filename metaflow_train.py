@@ -44,16 +44,34 @@ class TrainingSimulatorFlow(FlowSpec):
     @step
     def start(self):
         print("Importing data in this step")
-        self.num_demos = 498
-        self.num_epochs = 200 # Training epochs
-        self.episode_length=50
+        self.num_demos=498
+        self.num_epochs=100 # Training epochs
+        self.episode_length=100
         self.num_episodes=200 # Simulated Testing Epochs.
+        self.variation_number = 0                                                                                                                                                                                
         self.agent_modules = [{
             'module_name':'models.SmartImmitationAgent',
-            'agent_name':'SimpleImmitationLearningAgent'
-        },{
+            'agent_name':'SimpleImmitationLearningAgent',
+            'args':{'num_layers':4},
+            'reporting_name':'SimpleImmitationLearningAgent__4'
+        },
+        {
+            'module_name':'models.SmartImmitationAgent',
+            'agent_name':'SimpleImmitationLearningAgent',
+            'args':{'num_layers':1},
+            'reporting_name':'SimpleImmitationLearningAgent__1'
+        },
+        {
+            'module_name':'models.SmartImmitationAgent',
+            'agent_name':'SimpleImmitationLearningAgent',
+            'args':{'num_layers':2},
+            'reporting_name':'SimpleImmitationLearningAgent__2'
+        },
+        {
             'module_name':'models.ImmitationMutant',
-            'agent_name': 'ImmitationLearningMutantAgent'
+            'agent_name': 'ImmitationLearningMutantAgent',
+            'args':{},
+            'reporting_name':'ImmitationLearningMutantAgent'
         }]
         self.next(self.train,foreach='agent_modules')
 
@@ -64,9 +82,10 @@ class TrainingSimulatorFlow(FlowSpec):
         from SimulationEnvironment.Environment import ReachTargetSimulationEnv
         import importlib
         agent_module = importlib.import_module(self.input['module_name'])
-        agent = getattr(agent_module,self.input['agent_name'])()
+        agent = getattr(agent_module,self.input['agent_name'])(**self.input['args'])
 
         curr_env = ReachTargetSimulationEnv(dataset_root='/tmp/rlbench_data')
+        curr_env.task._variation_number = self.variation_number
         # Set image_paths_output=True when loading dataset from file if images also dont need to be loaded for dataset
         demos = curr_env.get_demos(self.num_demos,live_demos=False,image_paths_output=True) 
         # agent.load_model('SavedModels/ImmitationLearningConvolvingMutantAgent-2020-04-05-04-18.pt')
@@ -74,7 +93,7 @@ class TrainingSimulatorFlow(FlowSpec):
         loss = agent.train_agent(self.num_epochs)
         self.loss = loss
         self.total_data_size = agent.total_train_size
-        self.agent_name = agent.__class__.__name__
+        self.agent_name = self.input['reporting_name']
         self.model = agent.neural_network.state_dict()
         self.optimizer = agent.optimizer.state_dict()
         self.next(self.simulate)
@@ -85,7 +104,7 @@ class TrainingSimulatorFlow(FlowSpec):
         from SimulationEnvironment.Environment import ReachTargetSimulationEnv
         import importlib
         agent_module = importlib.import_module(self.input['module_name'])
-        agent = getattr(agent_module,self.input['agent_name'])()
+        agent = getattr(agent_module,self.input['agent_name'])(**self.input['args'])
 
         curr_env = ReachTargetSimulationEnv(headless=True,episode_length=self.episode_length,num_episodes=self.num_episodes)
         agent.load_model_from_object(self.model)
