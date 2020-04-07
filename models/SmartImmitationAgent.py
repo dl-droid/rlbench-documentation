@@ -22,19 +22,13 @@ class SimpleFullyConnectedPolicyEstimator(nn.Module):
         super(SimpleFullyConnectedPolicyEstimator, self).__init__()
         self.fc1 = nn.Linear(num_states, 200)
         self.fc2 = nn.Linear(200, 200)
-        self.fc3 = nn.Linear(200, 200)
-        self.fc4 = nn.Linear(200, 200)
-        self.fc5 = nn.Linear(200, 200)
-        self.fc6 = nn.Linear(200, num_actions)
+        self.fc3 = nn.Linear(200, num_actions)
 
     # x is input to the network.
     def forward(self, x):
         x = F.relu(self.fc1(x))
         x = F.relu(self.fc2(x))
-        x = F.relu(self.fc3(x))
-        x = F.relu(self.fc4(x))
-        x = F.relu(self.fc5(x))
-        x = self.fc6(x)
+        x = self.fc3(x)
         return x
 
 
@@ -87,7 +81,7 @@ class SimpleImmitationLearningAgent(LearningAgent):
         # Input State Tensors
         final_vector = self.get_train_vectors(demos)    
         final_torch_tensor = torch.from_numpy(final_vector)
-
+        self.total_train_size = len(final_torch_tensor)
         # Output Action Tensors
         ground_truth_velocities = np.array([getattr(observation,'joint_velocities') for episode in demos for observation in episode]) #
         ground_truth_gripper_positions = np.array([getattr(observation,'gripper_open') for episode in demos for observation in episode])

@@ -5,3 +5,4 @@ Coppelia*
 docker_setup
 .env/
 *.pyc
+.metaflow

@@ -8,12 +8,18 @@ class FinalData():
         self.agent_name = None
         self.loss = None
         self.simulation_analytics = None
+        self.total_data_size = 0
     
     def __str__(self):
         num_convergence_metrics = len(self.simulation_analytics['convergence_metrics'])
         percent_converge = (len(self.simulation_analytics['convergence_metrics']) / self.simulation_analytics['total_epochs_allowed'])*100
+        data_size = 0
+        if hasattr(self,'total_data_size'):
+            data_size = self.total_data_size
         x = '''
         Agent Name : {agent_name}
+
+        Total Training Data Size : {data_size}
 
         Simulation Results 
 
@@ -28,7 +34,8 @@ class FinalData():
             total_episodes=str(self.simulation_analytics['total_epochs_allowed']),\
             steps=str(self.simulation_analytics['max_steps_per_episode']),\
             num_convergence_metrics=str(num_convergence_metrics), \
-            percent_converge=str(percent_converge)
+            percent_converge=str(percent_converge), \
+            data_size="NO DATA" if data_size is 0 else str(data_size)
             )
         return x
 
@@ -37,7 +44,7 @@ class TrainingSimulatorFlow(FlowSpec):
     @step
     def start(self):
         print("Importing data in this step")
-        self.num_demos = 350
+        self.num_demos = 498
         self.num_epochs = 200 # Training epochs
         self.episode_length=50
         self.num_episodes=200 # Simulated Testing Epochs.
@@ -66,6 +73,7 @@ class TrainingSimulatorFlow(FlowSpec):
         agent.injest_demonstrations(demos)   
         loss = agent.train_agent(self.num_epochs)
         self.loss = loss
+        self.total_data_size = agent.total_train_size
         self.agent_name = agent.__class__.__name__
         self.model = agent.neural_network.state_dict()
         self.optimizer = agent.optimizer.state_dict()
@@ -95,6 +103,7 @@ class TrainingSimulatorFlow(FlowSpec):
             data.agent_name = task_data.agent_name
             data.loss = task_data.loss
             data.simulation_analytics = task_data.simulation_analytics
+            data.total_data_size = task_data.total_data_size
             final_data.append(data)
         
         self.final_data = final_data
