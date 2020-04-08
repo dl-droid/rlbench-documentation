@@ -70,7 +70,7 @@ class SimulationEnvionment():
         # Dont need to call launch as task.get_task can launch env. 
         self.task = self.env.get_task(task)
         _, obs = self.task.reset()
-        self.action_space =  spaces.Box(low=-1.0, high=1.0, shape=(action_mode.action_size,), dtype=np.float32)
+        self.action_space =  spaces.Box(low=-1.0, high=1.0, shape=(self.env.action_size,), dtype=np.float32)
         self.logger = logger.create_logger(__class__.__name__)
         self.logger.propagate = 0
 
