@@ -120,8 +120,8 @@ ervations which achieve the task.
 # Running the Code 
 
 1. Prerequisites PyRep and RLBench
-    1. Run `sh setup_pyrep_ubuntu18.04.sh` on Ubuntu18.04 for installing PyRep + RLBench
-2. Running Dumb Immitation Learning Agent Training / Simulation:
+    1. Run `sh setup_pyrep_ubuntu18.04.sh` on Ubuntu18.04 for installing PyRep + RLBench + Downloading the Dataset
+2. Running Immitation Learning Agent Training / Simulation:
     ```sh
     python run_learning.py
     ```

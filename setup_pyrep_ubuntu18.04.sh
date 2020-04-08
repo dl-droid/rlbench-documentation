@@ -22,3 +22,5 @@ echo "Installed PyRep and RLBench !"
 echo "Installing PyTorch and Metaflow"
 .env/bin/pip install -r requirements.txt
 # docker run -i -t --rm -e DISPLAY=$DISPLAY -u docker -v /tmp/.X11-unix:/tmp/.X11-unix:ro --name="PyRep_Docker_Test" valaygaurang/pyrep:0.1
+echo "Downloading Dataset with 200 Demos Of Reach Target Task"
+.env/bin/python RLBench/tools/dataset_generator.py --tasks reach_target --episodes_per_task 200 --processes 1

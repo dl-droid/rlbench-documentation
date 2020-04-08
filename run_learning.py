@@ -1,12 +1,12 @@
 # import deep_learning_rl as Simulator  
 from SimulationEnvironment.Environment import ReachTargetSimulationEnv
-import models.SmartImmitationAgent as IL   
+import models.ImmitationMutant as IL   
 import time
 # Set dataset_root to load from a folder and datasst will load from there. 
 curr_env = ReachTargetSimulationEnv(dataset_root='/tmp/rlbench_data',headless=True)
 # Set image_paths_output=False when loading dataset from file. 
-demos = curr_env.get_demos(200,live_demos=False,image_paths_output=True) 
-agent = IL.SimpleImmitationLearningAgent() 
+demos = curr_env.get_demos(4,live_demos=False,image_paths_output=True) 
+agent = IL.ImmitationLearningMutantAgent() 
 # agent.load_model('SavedModels/ImmitationLearningConvolvingMutantAgent-2020-04-05-04-18.pt')
 agent.injest_demonstrations(demos)   
 agent.train_agent(100)
