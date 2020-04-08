@@ -1,5 +1,5 @@
 from metaflow import FlowSpec, step,retry
-
+import json
 
 class FinalData():
     def __init__(self):
@@ -9,6 +9,7 @@ class FinalData():
         self.loss = None
         self.simulation_analytics = None
         self.total_data_size = 0
+        self.model_args = {}
     
     def __str__(self):
         num_convergence_metrics = len(self.simulation_analytics['convergence_metrics'])
@@ -16,10 +17,15 @@ class FinalData():
         data_size = 0
         if hasattr(self,'total_data_size'):
             data_size = self.total_data_size
+        model_args = {}
+        if hasattr(self,'model_args'):
+            model_args = self.model_args
         x = '''
         Agent Name : {agent_name}
 
         Total Training Data Size : {data_size}
+
+        Model Arguements : {model_args}
 
         Simulation Results 
 
@@ -35,6 +41,7 @@ class FinalData():
             steps=str(self.simulation_analytics['max_steps_per_episode']),\
             num_convergence_metrics=str(num_convergence_metrics), \
             percent_converge=str(percent_converge), \
+            model_args=json.dumps(model_args,indent=4), \
             data_size="NO DATA" if data_size is 0 else str(data_size)
             )
         return x
@@ -95,6 +102,7 @@ class TrainingSimulatorFlow(FlowSpec):
         self.total_data_size = agent.total_train_size
         self.agent_name = self.input['reporting_name']
         self.model = agent.neural_network.state_dict()
+        self.model_args = self.input['args']
         self.optimizer = agent.optimizer.state_dict()
         self.next(self.simulate)
     
@@ -123,6 +131,7 @@ class TrainingSimulatorFlow(FlowSpec):
             data.loss = task_data.loss
             data.simulation_analytics = task_data.simulation_analytics
             data.total_data_size = task_data.total_data_size
+            data.model_args = task_data.model_args
             final_data.append(data)
         
         self.final_data = final_data
