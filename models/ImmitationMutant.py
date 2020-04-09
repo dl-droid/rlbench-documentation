@@ -12,7 +12,7 @@ from torch.utils.data.dataset import Dataset
 # Import Relative deps
 import sys
 sys.path.append('..')
-from models.Agent import LearningAgent
+from models.Agent import TorchAgent
 import logger
  
 
@@ -70,7 +70,7 @@ class ModularPolicyDataset(Dataset):
     def __len__(self):
         return len(self.joint_pos) # of how many examples(images?) you have
 
-class ImmitationLearningMutantAgent(LearningAgent):
+class ImmitationLearningMutantAgent(TorchAgent):
     """
     ImmitationLearningMutantAgent
     -----------------------
@@ -89,15 +89,15 @@ class ImmitationLearningMutantAgent(LearningAgent):
             z is tensor([[1,2,3,1,2,3]])
     - The concat vector is passed through fully connected layers to finally yeild output vector.
     """
-    def __init__(self,learning_rate = 0.01,batch_size=64):
-        super(LearningAgent,self).__init__()
+    def __init__(self,learning_rate = 0.01,batch_size=64,collect_gradients=False):
+        super(TorchAgent,self).__init__(collect_gradients=collect_gradients)
         self.learning_rate = learning_rate
         # action should contain 1 extra value for gripper open close state
         self.neural_network = ModularPolicyEstimator()
         self.optimizer = optim.SGD(self.neural_network.parameters(), lr=learning_rate, momentum=0.9)
         self.loss_function = nn.SmoothL1Loss()
         self.training_data = None
-        self.logger = logger.create_logger(__name__)
+        self.logger = logger.create_logger(__class__.__name__)
         self.logger.propagate = 0
         self.input_state = 'joint_positions'
         self.output_action = 'joint_velocities'
@@ -148,6 +148,8 @@ class ImmitationLearningMutantAgent(LearningAgent):
                 network_pred = self.neural_network(jointpos.float(),targetpos.float()) 
                 loss = self.loss_function(network_pred,output.float())
                 loss.backward()
+                if self.collect_gradients:
+                    self.set_gradients(self.neural_network.named_parameters())
                 self.optimizer.step()
                 running_loss += loss.item()*jointpos.size(0)
                 steps+=1
