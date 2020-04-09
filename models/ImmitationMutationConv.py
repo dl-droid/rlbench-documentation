@@ -12,7 +12,7 @@ from torch.utils.data.dataset import Dataset
 # Import Relative deps
 import sys
 sys.path.append('..')
-from models.Agent import LearningAgent
+from models.Agent import TorchAgent
 import logger
  
 
@@ -114,7 +114,7 @@ class ModularPolicyImagesDataset(Dataset):
     def __len__(self):
         return len(self.joint_pos) # of how many examples(images?) you have
 
-class ImmitationLearningConvolvingMutantAgent(LearningAgent):
+class ImmitationLearningConvolvingMutantAgent(TorchAgent):
     """
     ImmitationLearningConvolvingMutantAgent
     -----------------------
@@ -131,8 +131,8 @@ class ImmitationLearningConvolvingMutantAgent(LearningAgent):
         - If tensor is like and image then Policy has conv NN otherwise just dense sequential NN
 
     """
-    def __init__(self,learning_rate = 0.01,batch_size=64):
-        super(LearningAgent,self).__init__()
+    def __init__(self,learning_rate = 0.01,batch_size=64,collect_gradients=False):
+        super(TorchAgent,self).__init__(collect_gradients=collect_gradients)
         self.learning_rate = learning_rate
         # action should contain 1 extra value for gripper open close state
         self.neural_network = ModularConvolutionalPolicyEstimator()
@@ -207,6 +207,8 @@ class ImmitationLearningConvolvingMutantAgent(LearningAgent):
                 network_pred = self.neural_network(jointpos.float(),targetpos.float(),left_rgb.float(),right_rgb.float(),wrist_rgb.float()) 
                 loss = self.loss_function(network_pred,output.float())
                 loss.backward()
+                if self.collect_gradients:
+                    self.set_gradients(self.neural_network.named_parameters())
                 self.optimizer.step()
                 running_loss += loss.item()*jointpos.size(0)
                 steps+=1

@@ -11,7 +11,7 @@ class LearningAgent():
     different Deep Learning Algorithms. 
     """
 
-    def __init__(self):
+    def __init__(self,collect_gradients=False):
         self.learning_rate = None
         self.neural_network = None
         self.optimizer = None
@@ -21,6 +21,14 @@ class LearningAgent():
         self.input_state = None
         self.output_action = None
         self.total_train_size = None # This is to mark the size of the training data for the agent. 
+        self.collect_gradients = collect_gradients
+        self.gradients = {
+            'max':[],
+            'avg':[],
+            'layer':[]
+        }
+        self.print_every = 40
+
 
     def injest_demonstrations(self,demos:List[List[Observation]],**kwargs):
         raise NotImplementedError()
@@ -46,6 +54,30 @@ class LearningAgent():
         raise NotImplementedError()
 
     def save_model(self,file_path):
+        """
+        This will be used to save the model for which ever type of agent(TF/Torch)
+        """
+        raise NotImplementedError()
+
+    def load_model(self,file_path):
+        """
+        This will be used to load the model from file.
+        """
+        raise NotImplementedError()
+    
+
+    def load_model_from_object(self,state_dict):
+        """
+        This will be used to load the model from a dictionary.
+        """
+        raise NotImplementedError()
+
+class TorchAgent(LearningAgent):
+
+    def __init__(self,collect_gradeints = False):
+        super(LearningAgent,self).__init__(collect_gradeints=collect_gradeints)
+
+    def save_model(self,file_path):
         if not self.neural_network:
             return
         self.neural_network.to('cpu')
@@ -62,3 +94,17 @@ class LearningAgent():
         if not self.neural_network:
             return 
         self.neural_network.load_state_dict(state_dict)
+    
+    # Expects Named Params from Torch NN Module. 
+    def set_gradients(self,named_parameters):
+        avg_grads = []
+        max_grads= []
+        layers = []
+        for n, p in named_parameters:
+            if(p.requires_grad) and ("bias" not in n):
+                layers.append(n)
+                avg_grads.append(p.grad.abs().mean())
+                max_grads.append(p.grad.abs().max())
+        self.gradients['max'].append(max_grads)
+        self.gradients['avg'].append(avg_grads)
+        self.gradients['layer'].append(layers)

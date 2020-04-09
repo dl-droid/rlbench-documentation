@@ -12,7 +12,7 @@ from torch.utils.data.dataset import Dataset
 # Import Relative deps
 import sys
 sys.path.append('..')
-from models.Agent import LearningAgent
+from models.Agent import TorchAgent
 import logger
 
 
@@ -49,7 +49,7 @@ class SimplePolicyDataset(Dataset):
     def __len__(self):
         return len(self.final_vector) # of how many examples(images?) you have
 
-class SimpleImmitationLearningAgent(LearningAgent):
+class SimpleImmitationLearningAgent(TorchAgent):
     """
     SimpleImmitationLearningAgent
     -----------------------
@@ -60,8 +60,8 @@ class SimpleImmitationLearningAgent(LearningAgent):
     
     - [joint_positions_1,....joint_position_7,x,y,z] : Tensor Representation
     """
-    def __init__(self,learning_rate = 0.01,batch_size=64,num_layers=4):
-        super(LearningAgent,self).__init__()
+    def __init__(self,learning_rate = 0.01,batch_size=64,num_layers=4,collect_gradients=False):
+        super(TorchAgent,self).__init__(collect_gradients=collect_gradients)
         self.learning_rate = learning_rate
         # action should contain 1 extra value for gripper open close state
         self.neural_network = SimpleFullyConnectedPolicyEstimator(10,8,num_layers=num_layers)
@@ -121,6 +121,8 @@ class SimpleImmitationLearningAgent(LearningAgent):
                 network_pred = self.neural_network(final_torch_tensor.float()) 
                 loss = self.loss_function(network_pred,output.float())
                 loss.backward()
+                if self.collect_gradients:
+                    self.set_gradients(self.neural_network.named_parameters())
                 self.optimizer.step()
                 running_loss += loss.item()*final_torch_tensor.size(0)
                 steps+=1

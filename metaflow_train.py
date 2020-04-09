@@ -10,6 +10,11 @@ class FinalData():
         self.simulation_analytics = None
         self.total_data_size = 0
         self.model_args = {}
+        self.gradients = {
+            'max':[],
+            'avg':[],
+            'layer':[]
+        }
     
     def __str__(self):
         num_convergence_metrics = len(self.simulation_analytics['convergence_metrics'])
@@ -17,15 +22,24 @@ class FinalData():
         data_size = 0
         if hasattr(self,'total_data_size'):
             data_size = self.total_data_size
+       
         model_args = {}
         if hasattr(self,'model_args'):
             model_args = self.model_args
+        
+        collected_grads = "No"
+        if hasattr(self,'gradients'):
+            if len(self.gradients['avg']) > 0:
+                collected_grads = 'Yes'
+
         x = '''
         Agent Name : {agent_name}
 
         Total Training Data Size : {data_size}
 
         Model Arguements : {model_args}
+
+        Collected Gradients : {grad_collect}
 
         Simulation Results 
 
@@ -42,7 +56,8 @@ class FinalData():
             num_convergence_metrics=str(num_convergence_metrics), \
             percent_converge=str(percent_converge), \
             model_args=json.dumps(model_args,indent=4), \
-            data_size="NO DATA" if data_size is 0 else str(data_size)
+            data_size="NO DATA" if data_size is 0 else str(data_size),
+            grad_collect=collected_grads
             )
         return x
 
@@ -51,16 +66,29 @@ class TrainingSimulatorFlow(FlowSpec):
     @step
     def start(self):
         print("Importing data in this step")
-        self.num_demos=498
-        self.num_epochs=100 # Training epochs
+        self.num_demos=49
+        self.num_epochs=5 # Training epochs
         self.episode_length=100
-        self.num_episodes=200 # Simulated Testing Epochs.
-        self.variation_number = 0                                                                                                                                                                                
+        self.num_episodes=2 # Simulated Testing Epochs.
+        self.variation_number = 0     
+        self.collect_gradients = True                                                                                                                                                                           
         self.agent_modules = [{
             'module_name':'models.SmartImmitationAgent',
             'agent_name':'SimpleImmitationLearningAgent',
             'args':{'num_layers':4},
             'reporting_name':'SimpleImmitationLearningAgent__4'
+        },
+        {
+            'module_name':'models.ImmitationLearning',
+            'agent_name':'ImmitationLearningAgent',
+            'args':{},
+            'reporting_name':'Idiot_ImmitationLearningAgent'
+        },
+        {
+            'module_name':'models.ImmitationMutationConv',
+            'agent_name':'ImmitationLearningConvolvingMutantAgent',
+            'args':{},
+            'reporting_name':'ImmitationLearningConvolvingMutantAgent'
         },
         {
             'module_name':'models.SmartImmitationAgent',
@@ -89,12 +117,12 @@ class TrainingSimulatorFlow(FlowSpec):
         from SimulationEnvironment.Environment import ReachTargetSimulationEnv
         import importlib
         agent_module = importlib.import_module(self.input['module_name'])
-        agent = getattr(agent_module,self.input['agent_name'])(**self.input['args'])
+        agent = getattr(agent_module,self.input['agent_name'])(**self.input['args'],collect_gradients=self.collect_gradients)
 
         curr_env = ReachTargetSimulationEnv(dataset_root='/tmp/rlbench_data')
         curr_env.task._variation_number = self.variation_number
         # Set image_paths_output=True when loading dataset from file if images also dont need to be loaded for dataset
-        demos = curr_env.get_demos(self.num_demos,live_demos=False,image_paths_output=True) 
+        demos = curr_env.get_demos(self.num_demos,live_demos=False,image_paths_output=False) 
         # agent.load_model('SavedModels/ImmitationLearningConvolvingMutantAgent-2020-04-05-04-18.pt')
         agent.injest_demonstrations(demos)   
         loss = agent.train_agent(self.num_epochs)
@@ -104,6 +132,7 @@ class TrainingSimulatorFlow(FlowSpec):
         self.model = agent.neural_network.state_dict()
         self.model_args = self.input['args']
         self.optimizer = agent.optimizer.state_dict()
+        self.gradients = agent.gradients 
         self.next(self.simulate)
     
     @retry(times=4)
@@ -132,6 +161,7 @@ class TrainingSimulatorFlow(FlowSpec):
             data.simulation_analytics = task_data.simulation_analytics
             data.total_data_size = task_data.total_data_size
             data.model_args = task_data.model_args
+            data.gradients = task_data.gradients 
             final_data.append(data)
         
         self.final_data = final_data

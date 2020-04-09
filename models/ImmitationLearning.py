@@ -11,7 +11,7 @@ import numpy as np
 # Import Relative deps
 import sys
 sys.path.append('..')
-from models.Agent import LearningAgent
+from models.Agent import TorchAgent
 import logger
  
 
@@ -33,7 +33,7 @@ class FullyConnectedPolicyEstimator(nn.Module):
 
 
 
-class ImmitationLearningAgent(LearningAgent):
+class ImmitationLearningAgent(TorchAgent):
     """
     ImmitationLearningAgent
     -----------------------
@@ -44,8 +44,8 @@ class ImmitationLearningAgent(LearningAgent):
     todo : Make LSTM Based Networks that can remember over a batch of given observations. 
     https://stackoverflow.com/a/27516930 : For LSTM Array Stacking
     """
-    def __init__(self,learning_rate = 0.01,batch_size=64):
-        super(LearningAgent,self).__init__()
+    def __init__(self,learning_rate = 0.01,batch_size=64,collect_gradients=False):
+        super(TorchAgent,self).__init__(collect_gradients=collect_gradients)
         self.learning_rate = learning_rate
         # action should contain 1 extra value for gripper open close state
         self.neural_network = FullyConnectedPolicyEstimator(7,8)
@@ -100,6 +100,8 @@ class ImmitationLearningAgent(LearningAgent):
                 network_pred = self.neural_network(data.float()) 
                 loss = self.loss_function(network_pred,target.float())
                 loss.backward()
+                if self.collect_gradients:
+                    self.set_gradients(self.neural_network.named_parameters())
                 self.optimizer.step()
                 running_loss += loss.item()
                 steps+=1
