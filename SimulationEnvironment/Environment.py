@@ -52,7 +52,7 @@ image_types=[
 
 DEFAULT_ACTION_MODE = ActionMode(ArmActionMode.ABS_JOINT_VELOCITY)
 DEFAULT_TASK = ReachTarget
-class SimulationEnvionment():
+class SimulationEnvironment():
     """
     This can be a parent class from which we can have multiple child classes that 
     can diversify for different tasks and deeper functions within the tasks.
@@ -104,7 +104,7 @@ class SimulationEnvionment():
        raise NotImplementedError()
 
 
-class ReachTargetSimulationEnv(SimulationEnvionment):
+class ReachTargetSimulationEnv(SimulationEnvironment):
     """
     Inherits the `SimulationEnvironment` class. 
     This environment is specially ment for running traing agent for ReachTarget Task. 
@@ -112,8 +112,8 @@ class ReachTargetSimulationEnv(SimulationEnvionment):
     
     :param num_episodes : Get the total Epochs needed for the Simulation
     """
-    def __init__(self, action_mode=DEFAULT_ACTION_MODE, headless=True,num_episodes = 120,episode_length = 40,dataset_root=''):
-        super(ReachTargetSimulationEnv,self).__init__(action_mode=action_mode, task=ReachTarget, headless=headless,dataset_root=dataset_root)
+    def __init__(self, action_mode=DEFAULT_ACTION_MODE, headless=True,num_episodes = 120,task=ReachTarget,episode_length = 40,dataset_root=''):
+        super(ReachTargetSimulationEnv,self).__init__(action_mode=action_mode, task=task, headless=headless,dataset_root=dataset_root)
         self.num_episodes = num_episodes
         self.episode_length = episode_length
         self.logger = logger.create_logger(__class__.__name__)

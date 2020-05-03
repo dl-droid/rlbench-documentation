@@ -23,11 +23,11 @@ sudo apt-get update && sudo apt-get install -y \
   && sudo rm -rf /var/lib/apt/lists/*
 echo "Drivers Downloaded. Installing RLBench"
 git clone https://github.com/stepjam/PyRep.git
-git clone https://github.com/stepjam/RLBench.git
 echo "Setting Environment Variables For A Test Run"
 export COPPELIASIM_ROOT=$(pwd)/CoppeliaSim_Edu_V4_0_0_Ubuntu18_04
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$COPPELIASIM_ROOT
 export QT_QPA_PLATFORM_PLUGIN_PATH=$COPPELIASIM_ROOT
+git clone https://github.com/valayDave/RLBench.git
 echo "Installing Virtual Environment"
 python3 -m venv .env
 echo "Installing PyRep and RLBench in Virtual Environment"
